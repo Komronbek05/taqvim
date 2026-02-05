@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="tj">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <title>Тақвими Рамазон 2026</title>
+    
+    <link rel="manifest" href="manifest.json">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Rubik', sans-serif; background-color: #0f172a; color: #fff; -webkit-tap-highlight-color: transparent; touch-action: manipulation; overscroll-behavior-y: none; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel { background: #1e293b; border-radius: 2rem; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); }
+        .inner-dark-box { background: #0b1120; border-radius: 1.5rem; }
+        .active-day { background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%); border: 1px solid #2dd4bf; box-shadow: 0 10px 25px -5px rgba(13,148,136,0.4); transform: scale(1.02); z-index: 10; }
+        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.2,0.8,0.2,1) forwards; }
+        @keyframes fadeIn { from {opacity:0; transform:translateY(15px);} to {opacity:1; transform:translateY(0);} }
+        .pulse-skeleton { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+        @keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:.6;} }
+        button:active { transform: scale(0.97); }
+    </style>
+</head>
+<body class="min-h-screen relative overflow-x-hidden selection:bg-orange-500 selection:text-white">
+
+    <div class="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-900/20 rounded-full blur-[120px] translate-x-1/2 -translate-y-1/2"></div>
+        <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-900/20 rounded-full blur-[100px] -translate-x-1/2 translate-y-1/2"></div>
+    </div>
+
+    <div class="max-w-md mx-auto min-h-screen flex flex-col relative z-10 pb-24 px-5">
+        
+        <header class="pt-12 pb-6 flex justify-between items-start">
+            <div>
+                <h1 class="text-3xl font-bold text-white tracking-tight">Тақвими Рамазон</h1>
+                <p id="current-date" class="text-gray-400 text-sm font-medium mt-1 opacity-80">Боргузорӣ...</p>
+            </div>
+            
+            <div class="flex gap-2">
+                <button id="btn-notify" onclick="toggleNotifications()" class="bg-[#1e293b] w-10 h-10 rounded-2xl flex items-center justify-center text-gray-400 border border-white/5 shadow-lg transition hover:bg-[#283548]">
+                    <i class="fas fa-bell"></i>
+                </button>
+                
+                <button onclick="openModal('modal-region')" class="bg-[#1e293b] pl-3 pr-4 py-2.5 rounded-2xl flex items-center gap-2.5 text-xs font-bold text-emerald-400 hover:bg-[#283548] transition border border-white/5 shadow-lg">
+                    <div class="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                        <i class="fas fa-map-marker-alt text-[10px]"></i>
+                    </div>
+                    <span id="current-region-name">Душанбе</span>
+                </button>
+            </div>
+        </header>
+
+        <div id="skeleton-loader" class="pulse-skeleton">
+            <div class="glass-panel p-6 h-[420px] w-full mb-6 flex flex-col items-center justify-center">
+                <div class="h-4 w-24 bg-white/10 rounded-full mb-8"></div>
+                <div class="h-24 w-64 bg-white/10 rounded-2xl mb-8"></div>
+                <div class="w-full h-24 bg-white/5 rounded-2xl mb-6"></div>
+                <div class="grid grid-cols-2 gap-4 w-full"><div class="h-14 bg-white/5 rounded-xl"></div><div class="h-14 bg-white/5 rounded-xl"></div></div>
+            </div>
+            <div class="space-y-3"><div class="h-20 w-full bg-white/5 rounded-2xl"></div><div class="h-20 w-full bg-white/5 rounded-2xl"></div></div>
+        </div>
+
+        <div id="main-content" class="hidden fade-in">
+            <div class="mb-8">
+                <div class="glass-panel p-6 text-center relative overflow-hidden">
+                    <div class="mb-8 relative z-10">
+                        <p id="countdown-label" class="text-emerald-400 text-[11px] font-bold uppercase tracking-[0.2em] mb-2">ТО ИФТОР</p>
+                        <div id="countdown-timer" class="text-[4.5rem] leading-[1] font-bold text-[#f97316] font-mono tracking-tighter drop-shadow-lg py-2">--:--:--</div>
+                        <p id="target-event-name" class="text-gray-500 text-sm font-medium mt-1">Кушодан</p>
+                    </div>
+                    
+                    <div class="inner-dark-box p-5 mb-6 flex items-center justify-between relative">
+                        <div class="flex-1 text-center">
+                            <div class="flex items-center justify-center gap-2 mb-1.5 opacity-80">
+                                <i class="fas fa-moon text-emerald-500 text-[10px]"></i>
+                                <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">САҲАРХӮРӢ</span>
+                            </div>
+                            <div id="today-sahur" class="text-3xl font-bold text-white font-mono tracking-wide">--:--</div>
+                        </div>
+                        <div class="w-[1px] h-10 bg-white/10 mx-2"></div>
+                        <div class="flex-1 text-center">
+                            <div class="flex items-center justify-center gap-2 mb-1.5 opacity-80">
+                                <i class="fas fa-sun text-orange-500 text-[10px]"></i>
+                                <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">ИФТОР</span>
+                            </div>
+                            <div id="today-iftar" class="text-3xl font-bold text-white font-mono tracking-wide">--:--</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="openModal('modal-niyat')" class="py-3 px-3 bg-[#263346] hover:bg-[#2f3e54] rounded-3xl text-[13px] font-semibold border border-white/5 transition-colors flex items-center justify-center gap-2 text-gray-200"> <span>🤲</span> Нияти рӯза</button>
+                        <button onclick="openModal('modal-iftar')" class="py-3 px-3 bg-[#263346] hover:bg-[#2f3e54] rounded-3xl text-[13px] font-semibold border border-white/5 transition-colors flex items-center justify-center gap-2 text-gray-200"><span>🤲</span> Дуъои Ифтор</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-5 pl-1">
+                    <h3 class="text-emerald-400 font-bold text-xs uppercase tracking-widest">Тақвими пурра</h3>
+                    <span id="offset-badge" class="hidden text-[10px] font-mono bg-emerald-900/30 text-emerald-400 px-2.5 py-1 rounded border border-emerald-500/20">Душанбе</span>
+                </div>
+                <div id="calendar-list" class="space-y-3 pb-24"></div>
+            </div>
+        </div>
+
+        <button onclick="openModal('modal-taroveh')" class="fixed bottom-8 right-6 bg-gradient-to-br from-emerald-500 to-teal-600 text-white w-14 h-14 rounded-full shadow-[0_10px_30px_rgba(16,185,129,0.3)] flex items-center justify-center text-xl z-40 border border-white/20 active:scale-90 transition-transform"><i class="fas fa-kaaba"></i></button>
+
+    </div>
+
+    <div id="modal-region" class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm" onclick="closeModal(this)"><div class="bg-[#1e293b] w-full max-w-sm rounded-t-[2rem] sm:rounded-[2rem] p-6 relative transform translate-y-full transition-transform duration-300 border-t border-white/10" id="region-modal-content" onclick="event.stopPropagation()"><div class="w-12 h-1.5 bg-gray-600 rounded-full mx-auto mb-8 opacity-30"></div><h3 class="text-lg font-bold text-white mb-5 flex items-center gap-2"><i class="fas fa-map-marked-alt text-emerald-400"></i> Интихоби минтақа</h3><button id="btn-geo" onclick="detectLocation()" class="w-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 py-4 rounded-xl mb-4 flex items-center justify-center gap-2"><i class="fas fa-location-arrow"></i> <span>Автоматикӣ</span></button><div class="space-y-2 max-h-[50vh] overflow-y-auto no-scrollbar" id="region-list-container"></div><button onclick="closeModal(document.getElementById('modal-region'))" class="w-full mt-6 bg-white/5 text-gray-400 py-4 rounded-xl text-sm font-medium">Бастан</button></div></div>
+    <div id="modal-niyat" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/90 backdrop-blur-md p-5" onclick="closeModal(this)"><div class="bg-[#1e293b] w-full max-w-sm rounded-[2rem] p-8 relative" onclick="event.stopPropagation()"><button onclick="closeModalById('modal-niyat')" class="absolute top-6 right-6 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button><h3 class="text-xl font-bold text-emerald-400 mb-2">Нияти рӯза</h3><div class="w-8 h-1 bg-emerald-500 rounded mb-6"></div><p class="text-white text-lg italic mb-6 opacity-90">"Навайту ан асума савма шаҳри рамазона минал фаҷри илал мағриби, холисан лиллаҳи таъоло. Аллоҳу акбар."</p><div class="p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10"><p class="text-xs text-gray-400">Ният кардам рӯзаи моҳи шарифи Рамазон аз субҳи содиқ то фурӯ рафтани офтоб, холисан барои Худо.</p></div></div></div>
+    <div id="modal-iftar" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/90 backdrop-blur-md p-5" onclick="closeModal(this)"><div class="bg-[#1e293b] w-full max-w-sm rounded-[2rem] p-8 relative" onclick="event.stopPropagation()"><button onclick="closeModalById('modal-iftar')" class="absolute top-6 right-6 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button><h3 class="text-xl font-bold text-orange-400 mb-2">Дуъои Ифтор</h3><div class="w-8 h-1 bg-orange-500 rounded mb-6"></div><p class="text-white text-lg italic mb-6 opacity-90">"Аллоҳумма лака сумту ва бика оманту ва алайка таваккалту ва ало ризқика афтарту."</p><div class="p-4 bg-orange-500/5 rounded-2xl border border-orange-500/10"><p class="text-xs text-gray-400">Парвардигоро! Барои ризои Ту рўза доштам ва ба Ту имон овардам ва ба ту таваккал дорам ва ба ризқи додаи Ту ифтор кардам.</p></div></div></div>
+    <div id="modal-taroveh" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/90 backdrop-blur-md p-5" onclick="closeModal(this)"><div class="bg-[#1e293b] w-full max-w-sm rounded-[2rem] p-8 relative" onclick="event.stopPropagation()"><button onclick="closeModalById('modal-taroveh')" class="absolute top-6 right-6 text-gray-500 p-2"><i class="fas fa-times text-xl"></i></button><h3 class="text-xl font-bold text-cyan-400 mb-2">Тасбеҳи Таровеҳ</h3><div class="w-8 h-1 bg-cyan-500 rounded mb-6"></div><div class="space-y-4 text-gray-200 text-sm font-medium"><p>Субҳона зилмулки вал малакут. Субҳона зилъиззати вал ъазамати вал қудрати вал кибриёи вал ҷабарут.</p><p>Субҳонал маликил ҳаййиллази ло яному ва ло ямут.</p><div class="bg-black/30 p-3 rounded-xl text-center border border-white/5"><p class="text-white font-bold">Суббуҳун, Қуддусун, Раббуно ва Раббулмалоикати варруҳ.</p></div><p>Ло илоҳа иллаллоҳу настағфируллоҳ, насъалукал ҷанната ва наъузу бика минаннор.</p></div></div></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+        // CONFIG (ВСТАВЬТЕ СВОЙ)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBNatD2yzoi58Q7tkwFZnCfNmbtM9Brtq0",
+            authDomain: "taqvim-555f9.firebaseapp.com",
+            databaseURL: "https://taqvim-555f9-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "taqvim-555f9",
+            storageBucket: "taqvim-555f9.firebasestorage.app",
+            messagingSenderId: "771274880277",
+            appId: "1:771274880277:web:58c4e1b1f595c5a513251c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- PWA: Регистрация Service Worker ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW зарегистрирован:', reg.scope))
+                    .catch(err => console.log('Ошибка SW:', err));
+            });
+        }
+
+        // --- УВЕДОМЛЕНИЯ ---
+        window.toggleNotifications = () => {
+            if (!("Notification" in window)) return alert("Браузер не поддерживает уведомления");
+            
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    document.getElementById('btn-notify').classList.replace('text-gray-400', 'text-emerald-400');
+                    document.getElementById('btn-notify').classList.add('bg-emerald-900/20');
+                    new Notification("Рамазон 2025", { body: "Хабарҳо фаъол шуданд!", icon: "icon-192.png" });
+                } else {
+                    alert("Шумо иҷозат надодед.");
+                }
+            });
+        };
+        // Проверка при загрузке
+        if ("Notification" in window && Notification.permission === "granted") {
+            document.getElementById('btn-notify').classList.replace('text-gray-400', 'text-emerald-400');
+            document.getElementById('btn-notify').classList.add('bg-emerald-900/20');
+        }
+
+        // --- Logic ---
+        let allDays = [], allRegions = [], currentOffset = 0, currentRegionName = "Душанбе", countdownInterval = null;
+        const skeleton = document.getElementById('skeleton-loader'), content = document.getElementById('main-content'), listContainer = document.getElementById('calendar-list'), regionList = document.getElementById('region-list-container'), geoBtn = document.getElementById('btn-geo');
+
+        // Load Regions
+        onValue(ref(db, 'regions'), (snap) => {
+            const data = snap.val();
+            allRegions = [{id: 'def', name: 'Душанбе', offset: 0, lat: 38.5598, lng: 68.7870}];
+            if (data) Object.keys(data).forEach(k => allRegions.push({id:k, ...data[k]}));
+            renderRegions();
+            const saved = localStorage.getItem('selReg');
+            if(saved) { const f = allRegions.find(r => r.name === saved); if(f) selectRegion(f, false); }
+        });
+
+        // Load Days
+        onValue(ref(db, 'ramadan_days'), (snap) => {
+            const data = snap.val();
+            setTimeout(() => { skeleton.style.display = 'none'; content.classList.remove('hidden'); }, 400);
+            if(!data) return;
+            allDays = Object.keys(data).map(k => ({id:k, ...data[k]})).sort((a,b)=>(a.order||0)-(b.order||0));
+            renderApp();
+        });
+
+        function renderApp() {
+            if(!allDays.length) return;
+            listContainer.innerHTML = '';
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+            let todayData = null, tomorrowData = null;
+
+            allDays.forEach((item, idx) => {
+                const s = adjust(item.sahur, currentOffset), i = adjust(item.iftar, currentOffset);
+                const isToday = item.date === todayStr;
+                if(isToday) {
+                    todayData = {...item, sahur: s, iftar: i};
+                    if(allDays[idx+1]) tomorrowData = {...allDays[idx+1], sahur: adjust(allDays[idx+1].sahur, currentOffset)};
+                }
+                const d = new Date(item.date);
+                const row = document.createElement('div');
+                row.className = isToday ? 'active-day flex justify-between items-center p-4 rounded-2xl text-white mb-3' : 'flex justify-between items-center p-4 rounded-2xl bg-[#1e293b] text-gray-300 border border-white/5 mb-3';
+                row.innerHTML = `<div class="flex items-center gap-4"><div class="text-xl font-bold opacity-30 w-6 font-mono">${item.dayNumber}</div><div><div class="font-bold text-base ${isToday?'text-white':'text-gray-200'}">${item.dayName}</div><div class="text-[11px] opacity-60 uppercase font-mono tracking-wider">${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}</div></div></div><div class="flex gap-6"><div class="text-right"><div class="text-[9px] uppercase opacity-60 mb-0.5 font-bold">Саҳар</div><div class="font-mono text-lg font-bold tracking-wide">${s}</div></div><div class="text-right pl-6 border-l ${isToday?'border-white/20':'border-white/5'}"><div class="text-[9px] uppercase opacity-60 mb-0.5 font-bold">Ифтор</div><div class="font-mono text-lg font-bold tracking-wide">${i}</div></div></div>`;
+                listContainer.appendChild(row);
+                if(isToday) setTimeout(()=>row.scrollIntoView({behavior:'smooth',block:'center'}),600);
+            });
+
+            if(todayData) {
+                document.getElementById('today-sahur').innerText = todayData.sahur;
+                document.getElementById('today-iftar').innerText = todayData.iftar;
+                startTimer(todayData.sahur, todayData.iftar, tomorrowData?.sahur);
+            }
+        }
+
+        function startTimer(sahur, iftar, nextSahur) {
+            if(countdownInterval) clearInterval(countdownInterval);
+            const el = document.getElementById('countdown-timer'), lbl = document.getElementById('countdown-label'), sub = document.getElementById('target-event-name');
+            function tick() {
+                const now = new Date(), sDate = toDate(sahur), iDate = toDate(iftar);
+                let target, lText, sText, color;
+                if (now < sDate) { target = sDate; lText = "ТО САҲАРХӮРӢ"; sText = "Бастан"; color = "text-emerald-400"; }
+                else if (now < iDate) { target = iDate; lText = "ТО ИФТОР"; sText = "Кушодан"; color = "text-[#f97316]"; }
+                else { target = nextSahur ? toDate(nextSahur) : new Date(sDate); target.setDate(target.getDate()+1); lText = "ТО САҲАР (ФАРДО)"; sText = "Бастан"; color = "text-blue-400"; }
+                
+                const diff = target - now;
+                if (diff < 0) return;
+                
+                // NOTIFICATION TRIGGER
+                if (diff < 1000 && diff > 0) {
+                     if ("Notification" in window && Notification.permission === "granted") {
+                         new Notification("Рамазон", { body: lText === "ТО ИФТОР" ? "Вақти Ифтор шуд!" : "Вақти Саҳархӯрӣ!", icon: "icon-192.png" });
+                     }
+                }
+
+                const h = Math.floor((diff/3600000)%24), m = Math.floor((diff/60000)%60), sec = Math.floor((diff/1000)%60);
+                el.innerText = `${pad(h)}:${pad(m)}:${pad(sec)}`;
+                el.className = `text-[4.5rem] leading-[1] font-bold font-mono tracking-tighter drop-shadow-lg transition-colors duration-500 ${color}`;
+                lbl.innerText = lText; sub.innerText = sText;
+            }
+            countdownInterval = setInterval(tick, 1000);
+            tick();
+        }
+
+        // Helpers
+        window.detectLocation = () => { if(allRegions.length<2) return; if(!navigator.geolocation) return alert("No Geo"); const t=geoBtn.querySelector('span'), old=t.innerText; t.innerText="..."; geoBtn.disabled=true; navigator.geolocation.getCurrentPosition(p=>{const{latitude:lat,longitude:lng}=p.coords; let c=null,min=Infinity; allRegions.forEach(r=>{if(r.lat){const d=getDist(lat,lng,r.lat,r.lng);if(d<min){min=d;c=r}}}); t.innerText=old; geoBtn.disabled=false; if(c&&confirm(`Минтақа: ${c.name}?`)) selectRegion(c);}, e=>{t.innerText=old; geoBtn.disabled=false; alert("GPS фаъол кунед");}, {enableHighAccuracy:true,timeout:10000}); };
+        function renderRegions() { regionList.innerHTML=''; allRegions.forEach(r=>{const btn=document.createElement('button');const sel=r.name===currentRegionName;btn.className=`w-full text-left p-4 rounded-xl flex justify-between items-center mb-2 ${sel?'bg-emerald-900/20 border border-emerald-500/30':'bg-[#263346] border border-white/5'}`;btn.innerHTML=`<span class="${sel?'text-emerald-400':'text-gray-200'} font-medium">${r.name}</span><span class="text-xs bg-black/30 px-2 py-1 rounded text-gray-400 font-mono">${r.offset>0?'+':''}${r.offset} дақ</span>`;btn.onclick=()=>selectRegion(r);regionList.appendChild(btn);}); }
+        function selectRegion(r, close=true) { currentOffset=parseInt(r.offset)||0; currentRegionName=r.name; localStorage.setItem('selReg', r.name); document.getElementById('current-region-name').innerText=r.name; document.getElementById('offset-badge').innerText=`${r.name} ${r.offset>0?'+':''}${r.offset} дақ`; document.getElementById('offset-badge').classList.remove('hidden'); if(close)window.closeModal(document.getElementById('modal-region')); renderApp(); renderRegions(); }
+        function adjust(t,o) {if(!t)return"--:--";const[h,m]=t.split(':').map(Number);const d=new Date();d.setHours(h,m+o,0,0);return`${pad(d.getHours())}:${pad(d.getMinutes())}`;}
+        function toDate(t){const[h,m]=t.split(':');const d=new Date();d.setHours(h,m,0,0);return d;}
+        function pad(n){return String(n).padStart(2,'0');}
+        function getDist(lat1,lon1,lat2,lon2){const R=6371,dLat=deg(lat2-lat1),dLon=deg(lon2-lon1),a=Math.sin(dLat/2)**2+Math.cos(deg(lat1))*Math.cos(deg(lat2))*Math.sin(dLon/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+        function deg(d){return d*(Math.PI/180);}
+        const d = new Date(), days=["Якшанбе","Душанбе","Сешанбе","Чоршанбе","Панҷшанбе","Ҷумъа","Шанбе"], months=["Январ","Феврал","Март","Апрел","Май","Июн","Июл","Август","Сентябр","Октябр","Ноябр","Декабр"]; document.getElementById('current-date').innerText=`${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]}`;
+        window.openModal=(id)=>{const el=document.getElementById(id);el.classList.remove('hidden','flex');el.classList.add('flex');setTimeout(()=>{el.classList.remove('opacity-0');if(id==='modal-region')document.getElementById('region-modal-content').classList.remove('translate-y-full');else el.firstElementChild.classList.remove('scale-95');},10);};
+        window.closeModal=(el)=>{if(el.id==='modal-region')document.getElementById('region-modal-content').classList.add('translate-y-full');else el.firstElementChild.classList.add('scale-95');el.classList.add('opacity-0');setTimeout(()=>{el.classList.add('hidden');el.classList.remove('flex');},300);};
+        window.closeModalById=(id)=>window.closeModal(document.getElementById(id));
+    </script>
+</body>
+</html>
