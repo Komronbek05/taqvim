@@ -1,44 +1,59 @@
-const CACHE_NAME = 'ramazan-v1';
-const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  'https://cdn.tailwindcss.com',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap'
+const CACHE_NAME = 'taqvim-v2-modern';
+
+const urlsToCache = [
+    './',
+    './index.html',
+    './manifest.json',
+  './icon_app.png',
+    'https://cdn.tailwindcss.com',
+    'https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
 
-// Установка: Кэшируем важные файлы
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
-});
-
-// Активация
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-      );
-    })
-  );
-});
-
-// Fetch: Сначала ищем в кэше, если нет - в интернет
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((cached) => {
-      return cached || fetch(e.request);
-    })
-  );
-});
-
-// Обработка уведомлений (если приложение закрыто, но процесс жив)
-self.addEventListener('notificationclick', (event) => {
-    event.notification.close();
+self.addEventListener('install', (event) => {
     event.waitUntil(
-        clients.openWindow('./index.html')
+        caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
+    );
+    self.skipWaiting(); 
+});
+
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    if (cacheName !== CACHE_NAME) return caches.delete(cacheName);
+                })
+            );
+        })
+    );
+    self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+    // Не трогаем базу данных Firebase, пускаем напрямую в сеть
+    if (event.request.url.includes('firebasedatabase.app')) return; 
+
+    event.respondWith(
+        caches.match(event.request).then((response) => {
+            if (response) return response;
+            return fetch(event.request).then((networkResponse) => {
+                if (!networkResponse || networkResponse.status !== 200 || networkResponse.type === 'opaque') {
+                    return networkResponse;
+                }
+                const responseToCache = networkResponse.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                    if(event.request.method === 'GET' && event.request.url.startsWith('http')) {
+                        cache.put(event.request, responseToCache);
+                    }
+                });
+                return networkResponse;
+            }).catch(() => {
+                // Если нет сети, возвращаем кэшированную страницу
+                if (event.request.mode === 'navigate') {
+                    return caches.match('./index.html');
+                }
+            });
+        })
     );
 });
